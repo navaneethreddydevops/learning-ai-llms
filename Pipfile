@@ -5,6 +5,12 @@ name = "pypi"
 
 [packages]
 langchain = "*"
+transformers = "*"
+torch = "*"
+install = "*"
+huggingface-hub = "*"
+diffusers = "*"
+accelerate = "*"
 
 [dev-packages]
 
