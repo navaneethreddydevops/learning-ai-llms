@@ -11,6 +11,10 @@ install = "*"
 huggingface-hub = "*"
 diffusers = "*"
 accelerate = "*"
+black = "*"
+sentence-transformers = "*"
+python-dotenv = "*"
+protobuf = "*"
 
 [dev-packages]
 
