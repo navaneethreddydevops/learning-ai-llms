@@ -22,6 +22,8 @@ unstructured = {extras = ["local-inference"], version = "*"}
 chromadb = "*"
 langchain = {extras = ["all"], version = "*"}
 tiktoken = "*"
+invisible-watermark = "*"
+safetensors = "*"
 
 [dev-packages]
 
