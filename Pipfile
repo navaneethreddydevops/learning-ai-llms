@@ -4,7 +4,6 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-langchain = "*"
 transformers = "*"
 torch = "*"
 install = "*"
@@ -16,6 +15,13 @@ sentence-transformers = "*"
 python-dotenv = "*"
 protobuf = "*"
 openai = "*"
+tqdm = "*"
+pypdf = "*"
+faiss-cpu = "*"
+unstructured = {extras = ["local-inference"], version = "*"}
+chromadb = "*"
+langchain = {extras = ["all"], version = "*"}
+tiktoken = "*"
 
 [dev-packages]
 
