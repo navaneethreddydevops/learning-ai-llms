@@ -8,7 +8,7 @@ from langchain.vectorstores import Chroma
 
 load_dotenv()
 
-loader = UnstructuredFileLoader('data/Cloud-Native-Devops-with-Kubernetes-full-book.pdf')
+loader = UnstructuredFileLoader('../data/Cloud-Native-Devops-with-Kubernetes-full-book.pdf')
 documents = loader.load()
 
 text_splitter = CharacterTextSplitter(chunk_size=800, chunk_overlap=0)

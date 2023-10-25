@@ -22,6 +22,7 @@ unstructured = {extras = ["local-inference"], version = "*"}
 chromadb = "*"
 langchain = {extras = ["all"], version = "*"}
 tiktoken = "*"
+gpt4all = "*"
 
 [dev-packages]
 
