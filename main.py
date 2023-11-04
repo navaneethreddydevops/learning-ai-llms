@@ -79,14 +79,15 @@ def get_conversation_chain(vectorstore):
                                                                memory=memory)
     return conversation_chain
 
+
 #
-# # Create a Streamlit session state to store the conversation chain
+# # # Create a Streamlit session state to store the conversation chain
 # if 'conversation' not in st.session_state:
 #     st.session_state.conversation = get_conversation_chain(vectorstore)
 
 # User input for the question (again)
 if user_question:
-    st.chat_input(user_question)
+    st.text_input(user_question)
 
 # Streamlit sidebar
 with st.sidebar:

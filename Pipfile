@@ -29,6 +29,7 @@ pypdf2 = "*"
 altair = "*"
 instructorembedding = "*"
 htmltemplate = "*"
+psycopg2-binary = "*"
 
 [dev-packages]
 
