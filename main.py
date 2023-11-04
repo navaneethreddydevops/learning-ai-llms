@@ -10,103 +10,126 @@ from htmlTemplates import css, bot_template, user_template
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 import os
 
-# Load environment variables from a .env file
-load_dotenv()
 
-# Streamlit header
-st.header("GenAI Q&A with pgvector and Amazon Aurora PostgreSQL")
-
-# User input for the question
-user_question = st.chat_input("Ask a question about your documents:")
-
-# Initialize the HuggingFaceHub model
-llm = HuggingFaceHub(repo_id="google/flan-t5-xxl", model_kwargs={"temperature": 0.5, "max_length": 1024})
-
-
-# Define a function to extract text from PDFs
 def get_pdf_text(pdf_docs):
     text = ""
     for pdf in pdf_docs:
         pdf_reader = PdfReader(pdf)
         for page in pdf_reader.pages:
             text += page.extract_text()
-    print(text)
     return text
 
 
-# Define a function to split text into chunks
 def get_text_chunks(text):
     text_splitter = RecursiveCharacterTextSplitter(
-        separators=["\n\n", "\n", ".", "!", "?", ",", " ", ""],
+        separators=["\n\n", "\n", ".", " "],
         chunk_size=1000,
         chunk_overlap=200,
         length_function=len
     )
 
     chunks = text_splitter.split_text(text)
-    print(chunks)
     return chunks
 
 
-# Define the PostgreSQL connection string
-CONNECTION_STRING = PGVector.connection_string_from_db_params(
-    driver=os.getenv("PGVECTOR_DRIVER"),
-    user=os.getenv("PGVECTOR_USER"),
-    password=os.getenv("PGVECTOR_PASSWORD"),
-    host=os.getenv("PGVECTOR_HOST"),
-    port=os.getenv("PGVECTOR_PORT"),
-    database=os.getenv("PGVECTOR_DATABASE")
-)
-
-
-# Define a function to create a vector store from text chunks
 def get_vectorstore(text_chunks):
-    model_name = "sentence-transformers/all-mpnet-base-v2"
-    model_kwargs = {'device': 'cpu'}
-    embeddings = HuggingFaceInstructEmbeddings(
-        model_name=model_name,
-        model_kwargs=model_kwargs
-    )
-    vectorstore = PGVector.from_texts(texts=text_chunks, embedding=embeddings, connection_string=CONNECTION_STRING)
-    print(vectorstore)
-    return vectorstore
+    embeddings = HuggingFaceInstructEmbeddings(model_name="sentence-transformers/all-mpnet-base-v2")
+    if text_chunks is None:
+        return PGVector(
+            connection_string=CONNECTION_STRING,
+            embedding_function=embeddings,
+        )
+    return PGVector.from_texts(texts=text_chunks, embedding=embeddings, connection_string=CONNECTION_STRING)
 
 
-# Define a function to create a conversation chain
 def get_conversation_chain(vectorstore):
-    memory = ConversationBufferMemory(memory_key='chat_history', return_messages=True)
-    conversation_chain = ConversationalRetrievalChain.from_llm(llm=llm, retriever=vectorstore.as_retriever(),
-                                                               memory=memory)
+    llm = HuggingFaceHub(repo_id="MBZUAI/LaMini-Flan-T5-783M", model_kwargs={"temperature": 0.2, "max_length": 4096})
+
+    memory = ConversationBufferMemory(
+        memory_key='chat_history', return_messages=True)
+    conversation_chain = ConversationalRetrievalChain.from_llm(
+        llm=llm,
+        chain_type="stuff",
+        retriever=vectorstore.as_retriever(search_kwargs={"k": 1}),
+        memory=memory
+    )
     return conversation_chain
 
 
-#
-# # # Create a Streamlit session state to store the conversation chain
-# if 'conversation' not in st.session_state:
-#     st.session_state.conversation = get_conversation_chain(vectorstore)
+def handle_userinput(user_question):
+    try:
+        response = st.session_state.conversation({'question': user_question})
+    except ValueError:
+        st.write("Sorry, please ask again in a different way.")
+        return
 
-# User input for the question (again)
-if user_question:
-    st.text_input(user_question)
+    st.session_state.chat_history = response['chat_history']
 
-# Streamlit sidebar
-with st.sidebar:
-    st.subheader("Your documents")
+    for i, message in enumerate(st.session_state.chat_history):
+        if i % 2 == 0:
+            st.write(user_template.replace(
+                "{{MSG}}", message.content), unsafe_allow_html=True)
+        else:
+            st.write(bot_template.replace(
+                "{{MSG}}", message.content), unsafe_allow_html=True)
 
-    # File uploader for PDFs
-    pdf_docs = st.file_uploader("Upload your PDFs here and click on 'Process'", accept_multiple_files=True)
 
-    if st.button("Process"):
-        if pdf_docs:
+def main():
+    st.set_page_config(page_title="Streamlit Question Answering App",
+                       layout="wide",
+                       page_icon=":books::parrot:")
+    st.write(css, unsafe_allow_html=True)
+
+    st.sidebar.markdown(
+        """
+        ### Instructions:
+        1. Browse and upload PDF files
+        2. Click Process
+        3. Type your question in the search bar to get more insights
+        """
+    )
+
+    if "conversation" not in st.session_state:
+        st.session_state.conversation = get_conversation_chain(get_vectorstore(None))
+    if "chat_history" not in st.session_state:
+        st.session_state.chat_history = None
+
+    st.header("GenAI Q&A with pgvector and Amazon Aurora PostgreSQL :books::parrot:")
+    user_question = st.text_input("Ask a question about your documents:")
+    if user_question:
+        handle_userinput(user_question)
+
+    with st.sidebar:
+        st.subheader("Your documents")
+        pdf_docs = st.file_uploader(
+            "Upload your PDFs here and click on 'Process'", type="pdf", accept_multiple_files=True)
+        if st.button("Process"):
             with st.spinner("Processing"):
-                # Get PDF text
+                # get pdf text
                 raw_text = get_pdf_text(pdf_docs)
 
-                # Get text chunks
+                # get the text chunks
                 text_chunks = get_text_chunks(raw_text)
 
-                # Create a vector store from text chunks
+                # create vector store
                 vectorstore = get_vectorstore(text_chunks)
 
-                # Update the conversation chain with the new vector store
+                # create conversation chain
                 st.session_state.conversation = get_conversation_chain(vectorstore)
+
+                st.success('PDF uploaded successfully!', icon="✅")
+
+
+if __name__ == '__main__':
+    load_dotenv()
+
+    CONNECTION_STRING = PGVector.connection_string_from_db_params(
+        driver=os.environ.get("PGVECTOR_DRIVER"),
+        user=os.environ.get("PGVECTOR_USER"),
+        password=os.environ.get("PGVECTOR_PASSWORD"),
+        host=os.environ.get("PGVECTOR_HOST"),
+        port=os.environ.get("PGVECTOR_PORT"),
+        database=os.environ.get("PGVECTOR_DATABASE")
+    )
+
+    main()
