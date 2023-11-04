@@ -20,9 +20,14 @@ pypdf = "*"
 faiss-cpu = "*"
 unstructured = {extras = ["local-inference"], version = "*"}
 chromadb = "*"
-langchain = {extras = ["all"], version = "*"}
+langchain = "*"
 tiktoken = "*"
 gpt4all = "*"
+streamlit = "*"
+pgvector = "*"
+pypdf2 = "*"
+altair = "*"
+instructorembedding = "*"
 
 [dev-packages]
 
