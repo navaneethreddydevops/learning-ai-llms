@@ -28,6 +28,7 @@ pgvector = "*"
 pypdf2 = "*"
 altair = "*"
 instructorembedding = "*"
+htmltemplate = "*"
 
 [dev-packages]
 
