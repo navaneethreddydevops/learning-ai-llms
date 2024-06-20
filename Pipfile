@@ -11,7 +11,7 @@ huggingface-hub = "*"
 diffusers = "*"
 accelerate = "*"
 black = "*"
-sentence-transformers = "*"
+sentence-transformers = "==2.2.2"
 python-dotenv = "*"
 protobuf = "*"
 openai = "*"
@@ -30,6 +30,7 @@ altair = "*"
 instructorembedding = "*"
 htmltemplate = "*"
 psycopg2-binary = "*"
+crewai = "*"
 
 [dev-packages]
 

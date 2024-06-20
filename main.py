@@ -1,9 +1,9 @@
 import streamlit as st
 from dotenv import load_dotenv
 from PyPDF2 import PdfReader
-from langchain.embeddings import HuggingFaceInstructEmbeddings
-from langchain.llms import HuggingFaceHub
-from langchain.vectorstores.pgvector import PGVector
+from langchain_community.embeddings import HuggingFaceInstructEmbeddings
+from langchain_community.llms import HuggingFaceHub
+from langchain_community.vectorstores import PGVector
 from langchain.memory import ConversationBufferMemory
 from langchain.chains import ConversationalRetrievalChain
 from htmlTemplates import css, bot_template, user_template
@@ -33,7 +33,13 @@ def get_text_chunks(text):
 
 
 def get_vectorstore(text_chunks):
-    embeddings = HuggingFaceInstructEmbeddings(model_name="sentence-transformers/all-mpnet-base-v2")
+    model_kwargs = {'device': 'cpu'}
+    encode_kwargs = {'normalize_embeddings': True}
+    embeddings = HuggingFaceInstructEmbeddings(
+        model_name="sentence-transformers/all-mpnet-base-v2",
+        model_kwargs=model_kwargs,
+        encode_kwargs=encode_kwargs
+        )
     if text_chunks is None:
         return PGVector(
             connection_string=CONNECTION_STRING,
